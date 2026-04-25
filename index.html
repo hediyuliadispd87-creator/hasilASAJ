@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Monitoring Hasil - External</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f0f2f5; }
+        .box { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .inputs { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        .btn-blue { background: #007bff; }
+        .btn-green { background: #28a745; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #343a40; color: white; }
+        #loader { display: none; color: #007bff; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Filter Data Hasil</h2>
+    <div class="inputs">
+        <input type="text" id="kelas" placeholder="Kelas...">
+        <input type="text" id="mapel" placeholder="Mata Pelajaran...">
+        <button class="btn-blue" onclick="ambilData()">Cari</button>
+        <button class="btn-green" onclick="unduhExcel()">Excel</button>
+    </div>
+
+    <div id="loader">Sedang mengambil data dari Server</div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Kelas</th>
+            <th>Nama</th>
+            <th>Mapel</th>
+            <th>Nilai</th>
+        </tr>
+        </thead>
+        <tbody id="tabelBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const URL_GAS = "https://script.google.com/macros/s/AKfycbxoaPRLCSGx2qduMOnwRTRJXqeWehLa1TnCmWiz7dNB5XpOgtLqc_J5Cs9QiLASY4tz/exec";
+    let dataGlobal = [];
+
+    async function ambilData() {
+        const k = document.getElementById('kelas').value.trim().toLowerCase();
+        const m = document.getElementById('mapel').value.trim().toLowerCase();
+        const loader = document.getElementById('loader');
+        const tbody = document.getElementById('tabelBody');
+
+        if (k === "" && m === "") {
+            alert("Silakan isi Kelas atau Mata Pelajaran terlebih dahulu!");
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Silakan isi filter untuk mencari data.</td></tr>";
+            dataGlobal = [];
+            return;
+        }
+
+        loader.style.display = "block";
+        tbody.innerHTML = "";
+
+        try {
+            // Ambil SEMUA data dari GAS endpoint getHasil2
+            const response = await fetch(`${URL_GAS}?action=getHasil2`);
+            const dataAsli = await response.json();
+
+            // Filter di CLIENT-SIDE (JavaScript)
+            const filtered = dataAsli.filter(item => {
+                const kelas = item.kelas ? item.kelas.toString().toLowerCase() : "";
+                const mapel = item.mata_pelajaran ? item.mata_pelajaran.toString().toLowerCase() : "";
+                
+                const matchKelas = k === "" || kelas.includes(k);
+                const matchMapel = m === "" || mapel.includes(m);
+                
+                return matchKelas && matchMapel;
+            });
+
+            dataGlobal = filtered;
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4'>Data tidak ditemukan.</td></tr>";
+            } else {
+                filtered.forEach(item => {
+                    tbody.innerHTML += `<tr>
+                        <td>${item.kelas || ""}</td>
+                        <td>${item.nama_siswa || ""}</td>
+                        <td>${item.mata_pelajaran || ""}</td>
+                        <td>${item.nilai || ""}</td>
+                    </tr>`;
+                });
+            }
+        } catch (err) {
+            alert("Gagal mengambil data. Pastikan URL Web App benar dan sudah di-deploy sebagai 'Anyone'.");
+        } finally {
+            loader.style.display = "none";
+        }
+    }
+
+    function unduhExcel() {
+        if (dataGlobal.length === 0) return alert("Cari data dulu!");
+
+        try {
+            const ws = XLSX.utils.json_to_sheet(dataGlobal);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "HASIL");
+
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+            if (window.AndroidInterface && window.AndroidInterface.downloadBase64File) {
+                window.AndroidInterface.downloadBase64File(wbout, "DataHasil.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            } else {
+                XLSX.writeFile(wb, "DataHasil.xlsx");
+            }
+        } catch (e) {
+            alert("Error generating Excel: " + e.message);
+        }
+    }
+</script>
+
+</body>
+</html>
