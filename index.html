@@ -2,74 +2,506 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Data Monitoring Hasil - External</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monitoring Hasil Ujian - ExamDigital</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f0f2f5; }
-        .box { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .inputs { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; }
-        .btn-blue { background: #007bff; }
-        .btn-green { background: #28a745; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #343a40; color: white; }
-        #loader { display: none; color: #007bff; font-weight: bold; margin-bottom: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        :root {
+            --primary: #6c63ff;
+            --primary-dark: #5349cc;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #1a202c;
+            --text-muted: #64748b;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 12px;
+            padding-bottom: 80px;
+        }
+
+        /* ---- HEADER ---- */
+        .header {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            padding: 24px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* ---- SEARCH BOX ---- */
+        .search-section {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-wrapper input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ---- BUTTONS ---- */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-search {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-search:active {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        .btn-excel {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-excel:active {
+            background: #16a34a;
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ---- LOADER ---- */
+        #loader {
+            display: none;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .loader-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(108, 99, 255, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ---- STATS ---- */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ---- DATA VIEW ---- */
+        .data-section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .data-header {
+            padding: 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* ---- TABLE (Desktop) ---- */
+        @media (min-width: 768px) {
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            table th {
+                background: var(--bg);
+                padding: 12px 16px;
+                text-align: left;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid var(--border);
+            }
+
+            table td {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+                font-size: 14px;
+            }
+
+            table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            table tbody tr:hover {
+                background: var(--bg);
+            }
+        }
+
+        /* ---- CARDS (Mobile) ---- */
+        @media (max-width: 767px) {
+            table {
+                display: none;
+            }
+
+            .card-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .card {
+                background: var(--surface);
+                border-radius: var(--radius-sm);
+                padding: 14px;
+                border: 1px solid var(--border);
+                transition: all 0.2s ease;
+            }
+
+            .card:active {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .card-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 8px;
+            }
+
+            .card-row:last-child {
+                margin-bottom: 0;
+            }
+
+            .card-label {
+                font-size: 12px;
+                color: var(--text-muted);
+                font-weight: 500;
+                flex: 0 0 40%;
+            }
+
+            .card-value {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text);
+                text-align: right;
+                flex: 1;
+                word-break: break-word;
+            }
+
+            .card-nilai {
+                background: linear-gradient(135deg, var(--primary), #8b5cf6);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 6px;
+                text-align: center;
+                margin-top: 10px;
+                font-weight: 700;
+                font-size: 16px;
+            }
+        }
+
+        /* ---- EMPTY STATE ---- */
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                padding-bottom: 70px;
+            }
+
+            .header {
+                padding: 20px 12px;
+                margin-bottom: 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .search-section {
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+
+            button {
+                min-height: 40px;
+                font-size: 13px;
+            }
+
+            .stats {
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-number {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+        }
+
+        /* ---- SAFE AREA ---- */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-bottom: max(80px, env(safe-area-inset-bottom));
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Filter Data Hasil</h2>
-    <div class="inputs">
-        <input type="text" id="kelas" placeholder="Kelas...">
-        <input type="text" id="mapel" placeholder="Mata Pelajaran...">
-        <button class="btn-blue" onclick="ambilData()">Cari</button>
-        <button class="btn-green" onclick="unduhExcel()">Excel</button>
+<!-- HEADER -->
+<div class="header">
+    <h1>📊 Monitoring Hasil</h1>
+    <p>ExamDigital — RahestaDev</p>
+</div>
+
+<!-- SEARCH SECTION -->
+<div class="search-section">
+    <div class="search-title">Filter Data</div>
+    <div class="input-group">
+        <div class="input-wrapper">
+            <input type="text" id="kelas" placeholder="Masukkan kelas (opsional)">
+        </div>
+        <div class="input-wrapper">
+            <input type="text" id="mapel" placeholder="Masukkan mata pelajaran (opsional)">
+        </div>
     </div>
+    <div class="button-group">
+        <button class="btn-search" onclick="ambilData()">🔍 Cari</button>
+        <button class="btn-excel" onclick="unduhExcel()">📥 Excel</button>
+    </div>
+</div>
 
-    <div id="loader">Sedang mengambil data dari Server</div>
+<!-- LOADER -->
+<div id="loader">
+    <div class="loader-text">
+        <div class="spinner"></div>
+        Mengambil data dari server...
+    </div>
+</div>
 
-    <table>
+<!-- STATS -->
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-number" id="totalCount">0</div>
+        <div class="stat-label">Total Data</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="rataRata">-</div>
+        <div class="stat-label">Rata-rata Nilai</div>
+    </div>
+</div>
+
+<!-- DATA SECTION -->
+<div class="data-section">
+    <!-- DESKTOP TABLE -->
+    <table id="tabelDesktop">
         <thead>
-        <tr>
-            <th>Kelas</th>
-            <th>Nama</th>
-            <th>Mapel</th>
-            <th>Nilai</th>
-        </tr>
+            <tr>
+                <th>Kelas</th>
+                <th>Nama Siswa</th>
+                <th>Mata Pelajaran</th>
+                <th>Nilai</th>
+            </tr>
         </thead>
         <tbody id="tabelBody"></tbody>
     </table>
+
+    <!-- MOBILE CARDS -->
+    <div class="card-list" id="cardList" style="padding: 12px; display: none;">
+    </div>
 </div>
 
 <script>
     const URL_GAS = "https://script.google.com/macros/s/AKfycbxoaPRLCSGx2qduMOnwRTRJXqeWehLa1TnCmWiz7dNB5XpOgtLqc_J5Cs9QiLASY4tz/exec";
     let dataGlobal = [];
+    const isMobile = window.innerWidth < 768;
 
     async function ambilData() {
         const k = document.getElementById('kelas').value.trim().toLowerCase();
         const m = document.getElementById('mapel').value.trim().toLowerCase();
         const loader = document.getElementById('loader');
         const tbody = document.getElementById('tabelBody');
+        const cardList = document.getElementById('cardList');
+        const tabelDesktop = document.getElementById('tabelDesktop');
 
         if (k === "" && m === "") {
             alert("Silakan isi Kelas atau Mata Pelajaran terlebih dahulu!");
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Silakan isi filter untuk mencari data.</td></tr>";
             dataGlobal = [];
+            updateUI();
             return;
         }
 
         loader.style.display = "block";
         tbody.innerHTML = "";
+        cardList.innerHTML = "";
 
         try {
-            // Ambil SEMUA data dari GAS endpoint getHasil2
             const response = await fetch(`${URL_GAS}?action=getHasil2`);
             const dataAsli = await response.json();
 
-            // Filter di CLIENT-SIDE (JavaScript)
+            if (dataAsli.error) {
+                throw new Error(dataAsli.error);
+            }
+
             const filtered = dataAsli.filter(item => {
                 const kelas = item.kelas ? item.kelas.toString().toLowerCase() : "";
                 const mapel = item.mata_pelajaran ? item.mata_pelajaran.toString().toLowerCase() : "";
@@ -81,45 +513,132 @@
             });
 
             dataGlobal = filtered;
+            updateUI();
 
-            if(filtered.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4'>Data tidak ditemukan.</td></tr>";
-            } else {
-                filtered.forEach(item => {
-                    tbody.innerHTML += `<tr>
-                        <td>${item.kelas || ""}</td>
-                        <td>${item.nama_siswa || ""}</td>
-                        <td>${item.mata_pelajaran || ""}</td>
-                        <td>${item.nilai || ""}</td>
-                    </tr>`;
-                });
-            }
         } catch (err) {
-            alert("Gagal mengambil data. Pastikan URL Web App benar dan sudah di-deploy sebagai 'Anyone'.");
+            alert("❌ Gagal mengambil data.\n\nPastikan:\n• URL Web App benar\n• Sudah di-deploy sebagai 'Anyone'\n\nError: " + err.message);
+            dataGlobal = [];
+            updateUI();
         } finally {
             loader.style.display = "none";
         }
     }
 
-    function unduhExcel() {
-        if (dataGlobal.length === 0) return alert("Cari data dulu!");
+    function updateUI() {
+        const tbody = document.getElementById('tabelBody');
+        const cardList = document.getElementById('cardList');
+        const tabelDesktop = document.getElementById('tabelDesktop');
+        const totalCount = document.getElementById('totalCount');
+        const rataRata = document.getElementById('rataRata');
 
-        try {
-            const ws = XLSX.utils.json_to_sheet(dataGlobal);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "HASIL");
+        // Update stats
+        totalCount.textContent = dataGlobal.length;
 
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        if (dataGlobal.length > 0) {
+            const nilaiArray = dataGlobal.map(item => parseFloat(item.nilai) || 0);
+            const rata = (nilaiArray.reduce((a, b) => a + b, 0) / nilaiArray.length).toFixed(1);
+            rataRata.textContent = rata;
+        } else {
+            rataRata.textContent = "-";
+        }
 
-            if (window.AndroidInterface && window.AndroidInterface.downloadBase64File) {
-                window.AndroidInterface.downloadBase64File(wbout, "DataHasil.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            } else {
-                XLSX.writeFile(wb, "DataHasil.xlsx");
-            }
-        } catch (e) {
-            alert("Error generating Excel: " + e.message);
+        // Clear
+        tbody.innerHTML = "";
+        cardList.innerHTML = "";
+
+        if (dataGlobal.length === 0) {
+            const emptyRow = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Data tidak ditemukan. Coba ubah filter.</div></div></td></tr>`;
+            tbody.innerHTML = emptyRow;
+            const emptyCard = `<div style="padding: 40px 20px; text-align: center;"><div style="font-size: 48px; margin-bottom: 12px;">🔍</div><div style="font-size: 14px; color: var(--text-muted);">Data tidak ditemukan.<br>Coba ubah filter.</div></div>`;
+            cardList.innerHTML = emptyCard;
+            return;
+        }
+
+        // Desktop Table
+        dataGlobal.forEach(item => {
+            tbody.innerHTML += `<tr>
+                <td>${item.kelas || "-"}</td>
+                <td>${item.nama_siswa || "-"}</td>
+                <td>${item.mata_pelajaran || "-"}</td>
+                <td><strong>${item.nilai || "-"}</strong></td>
+            </tr>`;
+        });
+
+        // Mobile Cards
+        dataGlobal.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-row">
+                    <div class="card-label">Kelas</div>
+                    <div class="card-value">${item.kelas || "-"}</div>
+                </div>
+                <div class="card-row">
+                    <div class="card-label">Nama</div>
+                    <div class="card-value">${item.nama_siswa || "-"}</div>
+                </div>
+                <div class="card-row">
+                    <div class="card-label">Mapel</div>
+                    <div class="card-value">${item.mata_pelajaran || "-"}</div>
+                </div>
+                <div class="card-nilai">${item.nilai || "-"}</div>
+            `;
+            cardList.appendChild(card);
+        });
+
+        // Show/hide based on device
+        if (window.innerWidth < 768) {
+            tabelDesktop.style.display = "none";
+            cardList.style.display = "flex";
+        } else {
+            tabelDesktop.style.display = "table";
+            cardList.style.display = "none";
         }
     }
+
+    function unduhExcel() {
+        if (dataGlobal.length === 0) {
+            alert("⚠️ Silakan cari data terlebih dahulu!");
+            return;
+        }
+
+        try {
+            const dataExport = dataGlobal.map(item => ({
+                'Kelas': item.kelas || "-",
+                'Nama Siswa': item.nama_siswa || "-",
+                'Mata Pelajaran': item.mata_pelajaran || "-",
+                'Nilai': item.nilai || "-"
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "HASIL UJIAN");
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 12 },
+                { wch: 20 },
+                { wch: 18 },
+                { wch: 10 }
+            ];
+
+            XLSX.writeFile(wb, `DataHasil_${new Date().getTime()}.xlsx`);
+        } catch (e) {
+            alert("❌ Error membuat file Excel: " + e.message);
+        }
+    }
+
+    // Handle responsive
+    window.addEventListener('resize', () => {
+        if (dataGlobal.length > 0) {
+            updateUI();
+        }
+    });
+
+    // Load data on startup
+    window.addEventListener('load', () => {
+        document.getElementById('tabelBody').innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👋</div><div class="empty-text">Gunakan filter untuk mencari data hasil ujian.</div></div></td></tr>`;
+    });
 </script>
 
 </body>
